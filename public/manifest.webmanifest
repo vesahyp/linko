@@ -1,0 +1,12 @@
+{
+  "name": "Linko",
+  "short_name": "Linko",
+  "description": "A shooter around a planet whose gravity bends every ship and every bullet.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#070a18",
+  "theme_color": "#070a18",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

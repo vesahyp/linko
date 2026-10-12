@@ -1,0 +1,7 @@
+node_modules
+dist
+.sim-check
+*.local
+.DS_Store
+shots/
+tools/dbg/

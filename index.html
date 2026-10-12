@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- maximum-scale and user-scalable stop pinch-zoom from fighting the
+         twin sticks; viewport-fit=cover claims the notch, and the game fits
+         the arena inside the safe-area insets. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#070a18" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Linko</title>
+    <meta name="description" content="A shooter around a planet whose gravity bends every ship and every bullet. Phones first." />
+    <!-- Analytics: the clavesa tracker, the same file as hoyry's. The pixel
+         URL is VITE_PIXEL_URL at build time; it is empty until linko has its
+         own pixel host (TODO.md), so the tracker sends nothing. -->
+    <script>
+      window.TRACKER_CONFIG = {
+        endpoint: "%VITE_PIXEL_URL%",
+        enabled: /^https:/.test("%VITE_PIXEL_URL%") && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !/[?&]hand=1/.test(location.search)
+      };
+    </script>
+    <script defer src="/tracker.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

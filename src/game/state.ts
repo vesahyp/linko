@@ -23,6 +23,8 @@ export interface Ship {
   charge: number;
   charging: boolean;
   gunCd: number;
+  /** main-gun volleys fired, for guns that alternate */
+  volley: number;
   missileCd: number;
   bitCd: number;
   dead: boolean;
@@ -131,6 +133,8 @@ export interface Bullet {
   target: number;
   /** charge level 0..1, for the look */
   level: number;
+  /** lasers: bounces left off the terrain and the screen's top and bottom */
+  bounces: number;
 }
 
 /** A boss beam: a warning line first, then the beam itself, which may sweep. */
@@ -290,6 +294,7 @@ export function createState(seed: number): SimState {
     charge: 0,
     charging: false,
     gunCd: 0,
+    volley: 0,
     missileCd: 0,
     bitCd: 0,
     dead: false,

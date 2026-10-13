@@ -556,11 +556,21 @@ function fireGun(s: SimState): void {
       break;
     }
     case 'laser': {
+      // straight lines through everything, and two diagonals that bounce off
+      // the terrain: the R-Type answer to turrets on the floor and ceiling
       sh.gunCd = 0.15 / rate;
       const offs = [[0], [-6, 6], [-9, 0, 9]][L - 1];
       for (const o of offs) {
         const b = shot(s, 'player', 'laser', x + 10, y + o, 0, 1000, 1.25, 2.5 + L * 0.5, 0.9);
         b.hit = [];
+      }
+      sh.volley++;
+      if (sh.volley % 2 === 0) {
+        for (const a of [-0.55, 0.55]) {
+          const b = shot(s, 'player', 'laser', x, y, a, 800, 0.5 + 0.15 * L, 2.5, 1.0);
+          b.hit = [];
+          b.bounces = 2;
+        }
       }
       break;
     }
@@ -859,6 +869,18 @@ function stepBullets(s: SimState): void {
     }
     b.x += b.vx * DT;
     b.y += b.vy * DT;
+    // a bouncing laser turns off the terrain and the screen's top and bottom
+    if (b.bounces > 0) {
+      const fy = Math.min(H, floorY(s, b.x));
+      const cy = Math.max(0, ceilY(s, b.x));
+      if ((b.y > fy && b.vy > 0) || (b.y < cy && b.vy < 0)) {
+        b.vy = -b.vy;
+        b.y = b.vy < 0 ? fy - 1 : cy + 1;
+        b.bounces--;
+        b.hit = [];
+        burst(s, b.x, b.y, 3, '#9fd0ff', 60, 1.4, 0.2);
+      }
+    }
     if (b.x < -30 || b.x > W + 30 || b.y < -30 || b.y > H + 30) b.life = 0;
     // the terrain stops shots
     else if (b.y > floorY(s, b.x) || b.y < ceilY(s, b.x)) {

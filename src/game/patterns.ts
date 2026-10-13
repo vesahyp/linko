@@ -6,7 +6,7 @@ import type { Beam, Bullet, BulletKind, SimState, Team } from './state';
  * a glance; only their number, speed and spacing change.
  */
 export function shot(s: SimState, team: Team, kind: BulletKind, x: number, y: number, angle: number, speed: number, dmg: number, r: number, life: number): Bullet {
-  const b: Bullet = { x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, r, dmg, team, life, kind, pierce: 0, hit: null, target: -1, level: 0 };
+  const b: Bullet = { x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, r, dmg, team, life, kind, pierce: 0, hit: null, target: -1, level: 0, bounces: 0 };
   s.bullets.push(b);
   return b;
 }
@@ -18,9 +18,9 @@ export function shot(s: SimState, team: Team, kind: BulletKind, x: number, y: nu
  */
 export function enemyShot(s: SimState, x: number, y: number, angle: number, speed: number, kind: BulletKind = 'orb'): Bullet {
   if (!s.ship.dead && Math.hypot(s.ship.x - x, s.ship.y - y) < 90) {
-    return { x, y, vx: 0, vy: 0, r: 0, dmg: 0, team: 'enemy', life: 0, kind, pierce: 0, hit: null, target: -1, level: 0 };
+    return { x, y, vx: 0, vy: 0, r: 0, dmg: 0, team: 'enemy', life: 0, kind, pierce: 0, hit: null, target: -1, level: 0, bounces: 0 };
   }
-  return shot(s, 'enemy', kind, x, y, angle, speed * 1.15 * (1 + 0.15 * s.loop), 20, kind === 'mine' ? 7 : 4.5, kind === 'mine' ? 9 : 7);
+  return shot(s, 'enemy', kind, x, y, angle, speed * 1.15 * (1 + 0.15 * s.loop), 25, kind === 'mine' ? 7 : 4.5, kind === 'mine' ? 9 : 7);
 }
 
 export function aimAt(s: SimState, x: number, y: number): number {

@@ -32,7 +32,7 @@ points. Landscape, one thumb to fly, the other optional.
 
 ## The ship
 
-- Hull of 100: an enemy shot takes 20, a ram 25, the terrain 15. A short
+- Hull of 100: an enemy shot takes 20, a ram 25, the terrain 10. A short
   blink of safety after each hit. A 4-unit hitbox under the sprite.
 - **Gun type from crystals**, the R-Type way. Red: a spread. Blue: a
   piercing laser. Yellow: homing shots. The same colour again raises the

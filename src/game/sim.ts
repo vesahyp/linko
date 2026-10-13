@@ -105,7 +105,8 @@ export function chargeTime(s: SimState): number {
   return 1.0 / (1 + [0, 0.3, 0.55, 0.8][s.ship.cards.capacitor]);
 }
 const fireRate = (s: SimState) => 1 + 0.2 * s.ship.cards.overdrive;
-const hpMul = (s: SimState) => 1 + 0.5 * s.loop;
+/** Enemies get tougher stage by stage, as the ship does, and again each loop. */
+const hpMul = (s: SimState) => (1 + 0.5 * s.loop) * (1 + 0.3 * (s.stage - 1));
 
 // ---------------------------------------------------------------- spawning
 
@@ -435,7 +436,8 @@ export function bossDown(s: SimState, e: Enemy): void {
   s.bullets = s.bullets.filter((b) => b.team === 'player');
   s.beams = [];
   for (const o of s.enemies) if (o !== e && o.hp > 0) killEnemy(s, o);
-  s.banner = { text: 'Stage clear', sub: `${ENEMIES[e.kind].name} down`, life: 3 };
+  s.ship.hp = Math.min(s.ship.maxHp, s.ship.hp + 20);
+  s.banner = { text: 'Stage clear', sub: `${ENEMIES[e.kind].name} down · hull +20`, life: 3 };
   s.sounds.push('bigboom', 'clear');
 }
 
@@ -471,12 +473,12 @@ function stepShip(s: SimState, inp: SimInput): void {
   if (sh.y > fy - 6) {
     sh.y = fy - 7;
     if (sh.invuln <= 0) burst(s, sh.x, fy, 10, '#ffb070', 120, 2, 0.4);
-    hurtShip(s, 15, 'wall');
+    hurtShip(s, 10, 'wall');
   }
   if (sh.y < cy + 6) {
     sh.y = cy + 7;
     if (sh.invuln <= 0) burst(s, sh.x, cy, 10, '#ffb070', 120, 2, 0.4);
-    hurtShip(s, 15, 'wall');
+    hurtShip(s, 10, 'wall');
   }
   sh.vx = (sh.x - ox) / DT;
   sh.vy = (sh.y - oy) / DT;

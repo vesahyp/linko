@@ -413,17 +413,26 @@ export class Renderer {
     if (e.kind === 'turret') {
       // a base on the terrain and a barrel that follows the ship
       const up = e.anchor === 'ceil' ? -1 : 1;
-      g.fillStyle = e.flash > 0 ? '#fff' : '#5b6684';
+      g.fillStyle = e.flash > 0 ? '#fff' : '#3a2a30';
       g.beginPath();
-      g.ellipse(0, up * 4, 11, 7, 0, Math.PI, 0, up < 0);
+      g.ellipse(0, up * 4, 12, 8, 0, Math.PI, 0, up < 0);
       g.fill();
-      g.fillStyle = col;
-      g.beginPath();
-      g.arc(0, 0, 6, 0, Math.PI * 2);
-      g.fill();
+      g.strokeStyle = '#ff9d6a';
+      g.lineWidth = 1.5;
+      g.stroke();
+      g.save();
       g.rotate(e.angle);
-      g.fillStyle = '#2b3348';
-      g.fillRect(2, -2, 11, 4);
+      g.fillStyle = '#1a1214';
+      g.fillRect(2, -2.5, 13, 5);
+      g.restore();
+      g.fillStyle = e.flash > 0 ? '#fff' : '#ff9d6a';
+      g.beginPath();
+      g.arc(0, 0, 6.5, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = Math.floor(s.time * 4 + e.seed * 4) % 2 ? '#ff3a3a' : '#ffd0a0';
+      g.beginPath();
+      g.arc(0, 0, 2.2, 0, Math.PI * 2);
+      g.fill();
       g.restore();
       return;
     }
@@ -572,14 +581,67 @@ export class Renderer {
     if (e.kind === 'warden') this.wardenHull(e);
     for (const p of order) {
       if (p.dead) {
-        if (p.kind === 'gun') this.wreck(e.x + p.ox, e.y + p.oy, p.r);
+        if (p.kind === 'gun' && e.kind !== 'serpent') this.wreck(e.x + p.ox, e.y + p.oy, p.r);
         continue;
       }
       const x = e.x + p.ox;
       const y = e.y + p.oy;
-      if (p.kind === 'armor') this.armor(x, y, p, e, s);
+      // the fortress bosses' armour is their hull art; only the serpent's segments are drawn one by one
+      if (p.kind === 'armor') {
+        if (e.kind === 'serpent') this.armor(x, y, p, e, s);
+        else if (p.name === 'plate') this.plate(x, y, p);
+      }
+      else if (p.kind === 'gun' && p.name.startsWith('seg-')) this.armor(x, y, p, e, s);
       else if (p.kind === 'gun') this.gun(x, y, p, s);
       else this.weak(x, y, p, e, s, def.color);
+    }
+  }
+
+  /** Plated metal: a gradient body, seams, rivets and running lights. */
+  private hull(pts: number[][], light: string, dark: string, edge: string, t: number): void {
+    const g = this.ctx;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const [, y] of pts) {
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    }
+    const gr = g.createLinearGradient(0, minY, 0, maxY);
+    gr.addColorStop(0, light);
+    gr.addColorStop(0.5, dark);
+    gr.addColorStop(1, light);
+    g.fillStyle = gr;
+    g.strokeStyle = edge;
+    g.lineWidth = 2;
+    g.beginPath();
+    pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+    g.closePath();
+    g.fill();
+    g.save();
+    g.clip();
+    g.strokeStyle = 'rgba(0,0,0,0.35)';
+    g.lineWidth = 1;
+    for (let y = minY; y < maxY; y += 22) {
+      g.beginPath();
+      g.moveTo(-200, y);
+      g.lineTo(200, y);
+      g.stroke();
+    }
+    for (let x = -200; x < 200; x += 34) {
+      g.beginPath();
+      g.moveTo(x, minY);
+      g.lineTo(x + 8, maxY);
+      g.stroke();
+    }
+    g.fillStyle = 'rgba(255,255,255,0.18)';
+    for (let y = minY + 11; y < maxY; y += 22) for (let x = -190; x < 200; x += 34) g.fillRect(x, y, 1.5, 1.5);
+    g.restore();
+    g.stroke();
+    // running lights along the edge
+    g.fillStyle = Math.floor(t * 3) % 2 ? edge : '#ffffff';
+    for (let i = 0; i < pts.length; i++) {
+      const [x, y] = pts[i];
+      g.fillRect(x - 1.5, y - 1.5, 3, 3);
     }
   }
 
@@ -587,49 +649,96 @@ export class Renderer {
     const g = this.ctx;
     g.save();
     g.translate(e.x, e.y);
-    g.fillStyle = '#3a2a26';
-    g.strokeStyle = '#ff9a5a';
-    g.lineWidth = 2;
+    this.hull(
+      [
+        [-54, -26],
+        [-34, -102],
+        [36, -96],
+        [74, -44],
+        [74, 44],
+        [36, 96],
+        [-34, 102],
+        [-54, 26],
+      ],
+      '#6a4a3c',
+      '#2a1c18',
+      '#ff9a5a',
+      e.t,
+    );
+    // the gun pods' arms
+    g.strokeStyle = '#4a3428';
+    g.lineWidth = 8;
+    for (const sy of [-1, 1]) {
+      g.beginPath();
+      g.moveTo(-10, sy * 60);
+      g.lineTo(-22, sy * 80);
+      g.stroke();
+    }
+    // the shutter frame round the core
+    g.fillStyle = '#1a1210';
     g.beginPath();
-    g.moveTo(-50, -30);
-    g.lineTo(-30, -100);
-    g.lineTo(40, -95);
-    g.lineTo(70, -40);
-    g.lineTo(70, 40);
-    g.lineTo(40, 95);
-    g.lineTo(-30, 100);
-    g.lineTo(-50, 30);
-    g.closePath();
+    g.arc(-36, 0, 24, 0, Math.PI * 2);
     g.fill();
+    g.strokeStyle = '#ff9a5a';
+    g.lineWidth = 1.5;
     g.stroke();
     g.restore();
+  }
+
+  /** The plating over the Bulwark's bridge: a riveted hatch. */
+  private plate(x: number, y: number, p: Part): void {
+    const g = this.ctx;
+    g.fillStyle = '#5a4048';
+    g.strokeStyle = '#ffb0b8';
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.roundRect(x - p.r * 0.7, y - p.r, p.r * 1.4, p.r * 2, 5);
+    g.fill();
+    g.stroke();
+    g.fillStyle = 'rgba(0,0,0,0.4)';
+    for (const dy of [-12, -4, 4, 12]) g.fillRect(x - p.r * 0.5, y + dy, p.r, 2);
   }
 
   private bulwarkHull(e: Enemy): void {
     const g = this.ctx;
     g.save();
     g.translate(e.x, e.y);
-    g.fillStyle = '#2e1c22';
-    g.strokeStyle = '#ff6a7a';
-    g.lineWidth = 2;
+    this.hull(
+      [
+        [-72, -150],
+        [-10, -165],
+        [90, -160],
+        [96, 160],
+        [-10, 165],
+        [-72, 150],
+        [-104, 84],
+        [-114, 0],
+        [-104, -84],
+      ],
+      '#6a3a48',
+      '#22141a',
+      '#ff6a7a',
+      e.t,
+    );
+    // the bridge tower and its windows
+    g.fillStyle = '#1a0e12';
     g.beginPath();
-    g.moveTo(-70, -150);
-    g.lineTo(80, -160);
-    g.lineTo(90, 160);
-    g.lineTo(-70, 150);
-    g.lineTo(-100, 80);
-    g.lineTo(-110, 0);
-    g.lineTo(-100, -80);
-    g.closePath();
+    g.roundRect(-74, -30, 50, 60, 6);
     g.fill();
-    g.stroke();
-    g.strokeStyle = 'rgba(0,0,0,0.4)';
-    for (let y = -140; y <= 140; y += 28) {
+    g.fillStyle = 'rgba(255,200,120,0.6)';
+    for (let i = 0; i < 4; i++) g.fillRect(-30 + i * 10, -40, 6, 3);
+    // engines at the back
+    g.globalCompositeOperation = 'lighter';
+    for (const y of [-110, 0, 110]) {
+      const fl = g.createRadialGradient(96, y, 0, 96, y, 22);
+      fl.addColorStop(0, 'rgba(255,170,120,0.9)');
+      fl.addColorStop(1, 'rgba(255,60,60,0)');
+      g.fillStyle = fl;
       g.beginPath();
-      g.moveTo(-60, y);
-      g.lineTo(80, y);
-      g.stroke();
+      g.arc(96, y, 22 + Math.random() * 4, 0, Math.PI * 2);
+      g.fill();
     }
+    g.globalCompositeOperation = 'source-over';
     g.restore();
   }
 
@@ -637,7 +746,7 @@ export class Renderer {
     const g = this.ctx;
     const serp = e.kind === 'serpent';
     const gr = g.createRadialGradient(x - p.r * 0.4, y - p.r * 0.4, p.r * 0.1, x, y, p.r);
-    gr.addColorStop(0, serp ? '#7adf8a' : '#8a8fa6');
+    gr.addColorStop(0, p.flash > 0 ? '#ffffff' : serp ? '#7adf8a' : '#8a8fa6');
     gr.addColorStop(1, serp ? '#1d4a2a' : '#262a38');
     g.fillStyle = gr;
     g.beginPath();

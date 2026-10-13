@@ -34,7 +34,8 @@ export function makeBoss(s: SimState, kind: EnemyKind): Enemy {
     case 'serpent': {
       e.parts = [part('head', 'weak', 0, 0, 18, hp)];
       e.parts[0].open = true;
-      for (let i = 1; i <= 10; i++) e.parts.push(part(`seg-${i}`, 'armor', 0, 0, 14 - i * 0.3));
+      // the body can be shot off segment by segment; the head is the life
+      for (let i = 1; i <= 10; i++) e.parts.push(part(`seg-${i}`, 'gun', 0, 0, 14 - i * 0.3, gunHp(55)));
       e.parts.push(part('gun-tail', 'gun', 0, 0, 12, gunHp(200)));
       e.trail = [];
       break;
@@ -64,7 +65,7 @@ const alive = (p: Part) => !p.dead;
 
 function phaseOf(e: Enemy): number {
   const f = e.hp / e.maxHp;
-  const guns = e.parts!.filter((p) => p.kind === 'gun' && (e.kind !== 'bulwark' || p.name.startsWith('turret')));
+  const guns = e.parts!.filter((p) => p.kind === 'gun' && (e.kind !== 'bulwark' || p.name.startsWith('turret')) && !p.name.startsWith('seg-'));
   if (f < 0.25 || (e.kind === 'bulwark' && f < 0.3)) return 3;
   if (e.kind === 'warden' && (f < 0.6 || guns.every((p) => p.dead))) return 2;
   if (e.kind === 'serpent' && f < 0.6) return 2;
@@ -160,8 +161,8 @@ function serpent(s: SimState, e: Enemy, live: boolean): void {
   if (!live || e.t < 3) return;
   // phase 1: the segments fire in turn, down the body
   e.gunCd -= DT;
-  const segs = e.parts!.filter((p) => p.name.startsWith('seg-'));
-  if (e.gunCd <= 0) {
+  const segs = e.parts!.filter((p) => p.name.startsWith('seg-') && alive(p));
+  if (e.gunCd <= 0 && segs.length) {
     e.index = (e.index + 1) % segs.length;
     const sg = segs[e.index];
     const x = e.x + sg.ox;

@@ -62,7 +62,7 @@ class Audio {
   play(name: string): void {
     if (!this.ctx || this.muted) return;
     const now = performance.now();
-    const gap = name === 'shot' ? 70 : name === 'pop' || name === 'eshot' ? 40 : 20;
+    const gap = name === 'shot' ? 70 : name === 'ping' ? 110 : name === 'pop' || name === 'eshot' ? 40 : 20;
     if (now - (this.last.get(name) ?? 0) < gap) return;
     this.last.set(name, now);
     switch (name) {
@@ -97,14 +97,31 @@ class Audio {
         return this.tone('square', 900, 1200, 0.06, 0.06);
       case 'clang':
         return this.tone('square', 260, 180, 0.08, 0.08);
-      case 'sling':
-        return this.tone('sine', 400, 1600, 0.35, 0.14);
-      case 'warp':
-        return this.tone('sine', 1400, 200, 0.4, 0.07);
       case 'mine':
         return this.tone('sine', 700, 680, 0.1, 0.05);
-      case 'wave':
+      case 'stage':
         return this.tone('triangle', 220, 440, 0.4, 0.12);
+      case 'alarm':
+        this.tone('square', 440, 440, 0.18, 0.08);
+        return this.tone('square', 330, 330, 0.36, 0.06);
+      case 'warn':
+        return this.tone('sawtooth', 900, 1200, 0.25, 0.05);
+      case 'laser':
+        this.hiss(0.6, 0.2, 4000);
+        return this.tone('sawtooth', 160, 120, 0.6, 0.12);
+      case 'ping':
+        return this.tone('square', 2200, 1800, 0.03, 0.025);
+      case 'open':
+        return this.tone('triangle', 200, 500, 0.2, 0.08);
+      case 'warn-rear':
+        return this.tone('triangle', 600, 300, 0.25, 0.08);
+      case 'charged':
+        return this.tone('sine', 1200, 1600, 0.12, 0.06);
+      case 'powerup':
+        this.tone('square', 500, 1000, 0.12, 0.08);
+        return this.tone('square', 750, 1500, 0.18, 0.06);
+      case 'bonus':
+        return this.tone('triangle', 880, 1760, 0.25, 0.08);
       case 'clear':
         this.tone('triangle', 440, 880, 0.3, 0.12);
         return this.tone('triangle', 660, 1320, 0.4, 0.08);

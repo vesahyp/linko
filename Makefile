@@ -11,8 +11,9 @@
 #   make shots-setup   # once: install Playwright and Chromium
 #   make playthrough   # the hand plays on an emulated iPhone by real touches, on video (SEED ?= 7 UPTO ?= 3 stages)
 #   make sheets        # frame sheets of the last playthrough, twelve frames each
+#   make boss-shots    # each boss mid-fight on an emulated iPhone, into shots/bosses/
 
-.PHONY: dev build preview check sim-check balance shots-setup playthrough sheets
+.PHONY: dev build preview check sim-check balance shots-setup playthrough sheets boss-shots
 
 dev:
 	npm run dev
@@ -47,3 +48,6 @@ playthrough:
 
 sheets:
 	node scripts/sheet.mjs
+
+boss-shots:
+	node scripts/boss-shots.mjs

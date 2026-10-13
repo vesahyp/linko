@@ -166,6 +166,8 @@ export class Hand {
         }
         continue;
       }
+      // turrets sit on the terrain: lining up with one means flying into the wall
+      if (e.kind === 'turret') continue;
       const d = e.x - sh.x;
       if (d > 0 && d < bestD) {
         bestD = d;
@@ -217,8 +219,8 @@ export class Hand {
         }
         const fy = floorY(s, x);
         const cy = ceilY(s, x);
-        if (y > fy - 22) cost += w * (y - (fy - 22)) * 5;
-        if (y < cy + 22) cost += w * (cy + 22 - y) * 5;
+        if (y > fy - 32) cost += w * (y - (fy - 32)) * 8;
+        if (y < cy + 32) cost += w * (cy + 32 - y) * 8;
       }
       // where a shooter player likes to be: the left third, lined up with the target
       if (c.x > 300) cost += (c.x - 300) * 0.25;

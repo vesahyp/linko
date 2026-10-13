@@ -78,6 +78,8 @@ function testRun(seed: number): SimState {
     s.scroll = at * 45;
     s.cursor = script.length - 1;
   }
+  // ?god=1: nothing hurts the ship, for screenshots
+  if (params.get('god')) s.ship.invuln = 1e9;
   return s;
 }
 

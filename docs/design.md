@@ -32,10 +32,10 @@ points. Landscape, one thumb to fly, the other optional.
 
 ## The ship
 
-- Hull of 100: an enemy shot takes 20, a ram 25, the terrain 10. A short
+- Hull of 100: an enemy shot takes 25, a ram 25, the terrain 10. A short
   blink of safety after each hit. A 4-unit hitbox under the sprite.
 - **Gun type from crystals**, the R-Type way. Red: a spread. Blue: a
-  piercing laser. Yellow: homing shots. The same colour again raises the
+  piercing laser, with diagonals that bounce off the terrain. Yellow: homing shots. The same colour again raises the
   level (to 3); a new colour changes the type and keeps the level. The pod
   takes the colour and fires its own version.
 - **Items:** S (speed, to 3), M (missiles, to 2), B (a bit above and below

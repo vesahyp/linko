@@ -94,8 +94,8 @@ scripts/
   is proved with the hand: `make balance` for the numbers over many seeds
   (where runs end, boss fight times, what took the hull), then `make
   playthrough` and `make sheets`, and look at the frames before reporting.
-  As of 2026-10-14 the hand beats the Warden in nearly every run, the
-  Serpent in about half, and clears all three stages in about 7 of 16.
+  As of 2026-10-14, over 24 seeds the hand loses 4 runs in stage 1, 6 to
+  the Serpent and 5 in the Dock, and clears all three stages in 9.
 - **URL knobs:** `?seed=N` fixes the run, `?stage=N` starts on stage N with
   the build a run has by then, `?boss=1` skips to the stage's boss,
   `?god=1` keeps the ship alive (screenshots), `?speed=2` runs the sim

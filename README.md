@@ -18,7 +18,7 @@ beam, a pod, and bosses with phases and weak points.
   comes back to: behind you it guards your back and fires backward.
 - **Power-ups:** shoot the glass carriers, and shoot down every ship of a
   formation. Crystals set your gun: red is a spread, blue a laser that
-  goes through, yellow homing shots. The same colour again makes it
+  goes through and bounces off walls, yellow homing shots. The same colour again makes it
   stronger. S is speed, M missiles, B a bit drone (two at most), + repair.
   Everything you pick up shows on the ship.
 - **Bosses:** armour turns your shots away. Shoot the guns off, and hit the

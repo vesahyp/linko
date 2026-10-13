@@ -1,77 +1,87 @@
 # Linko: the design
 
-Star Control 2 as a phone game, built like Höyry, with planet gravity as the
-main mechanic. Idea recorded 2026-10-12 in `jeeves/ideas/star-duel.md` as
-"Star duel"; moved here the day the repo was made, under the name Linko
-(Finnish for slingshot).
+Linko (Finnish for slingshot) is an arcade shooter for the phone in the
+shape of R-Type: a stage that scrolls, formations that come in set pieces,
+a screen full of enemies and bullets to read and dodge, a charge shot, a
+pod, power-ups you see on your ship, and bosses with phases and weak
+points. Landscape, one thumb to fly, the other optional.
 
-## Decisions for the first build (Vesa, 2026-10-12)
+## History
 
-These answer or override parts of the idea below.
+- 2026-10-12: recorded in `jeeves/ideas/star-duel.md` as "Star duel":
+  Star Control 2 played like Höyry, planet gravity central. The first build
+  (ADR 0002) was one planet in a fixed arena whose pull bent every ship and
+  bullet, with waves, a charge shot, a pod and upgrade cards.
+- 2026-10-13, Vesa: "forget the whole fixed planet gravity thing". Take it
+  toward R-Type and arcade shooters. Gravity may return as a hazard in
+  some stages, never as the core (ADR 0003).
 
-- **Single player only.** No online duels.
-- **Several enemies at once**, in waves, with R-Type's feel: a charge shot,
-  a detachable pod, dense formations, readable bullet patterns, big
-  explosions. One ship against one ship is dropped for now.
-- **Ship and gun upgrades** between waves, each visible on the ship. This
-  replaces the loot of the idea for the first build.
-- **One star system, one planet**, landscape twin-stick on a phone. The
-  star map, more systems, landing and story wait (`TODO.md`).
-- **Gravity must matter in every fight**, never decoration: ships, the
-  pod, enemies and every bullet fall; shots curve; enemies crash; low
-  orbits trap.
+## Controls
 
-How the first build plays is in `README.md`; how the code is laid out is in
-`CLAUDE.md`.
+- **Left thumb: drag to fly.** The ship follows the thumb's movement with a
+  gain of 1.5, from wherever the thumb lands on the left two thirds of the
+  screen. Lift and land again to move further. Position control, because a
+  stick's lag and overshoot lose to a bullet gap.
+- **Guns fire by themselves**, forward.
+- **Right thumb (optional): hold to charge, lift to fire** the wave
+  cannon. The longer the hold, the bigger the beam; a full charge pierces
+  a whole formation.
+- **POD button:** launch the pod forward; tap again to call it back. It
+  docks on the side it comes from: in front it shields and fires forward,
+  behind it shields and fires backward.
 
-Vesa's words: "More game ideas: star control 2. But like höyry. Planet
-gravity should play a big part."
+## The ship
 
-## Pitch
+- Hull of 100: an enemy shot takes 20, a ram 25, the terrain 15. A short
+  blink of safety after each hit. A 4-unit hitbox under the sprite.
+- **Gun type from crystals**, the R-Type way. Red: a spread. Blue: a
+  piercing laser. Yellow: homing shots. The same colour again raises the
+  level (to 3); a new colour changes the type and keeps the level. The pod
+  takes the colour and fires its own version.
+- **Items:** S (speed, to 3), M (missiles, to 2), B (a bit above and below
+  the ship, to 2), + (repair 25).
+- **Cards after each boss:** one of three lasting upgrades (hull plates,
+  capacitor, big wave, overdrive, pod armour, magnet).
+- Everything shows on the ship: emitters by gun type and level, nozzles by
+  speed, racks by missiles, the bits, plates, coils, the pod's colour.
 
-Ship duels around a planet. Gravity pulls both ships, so you fly with the
-well, not against it. Between duels you travel star systems, land on
-planets, trade, and follow a story.
+## Stages
 
-## Like Höyry
+Three stages, each a timed script of about ninety seconds, then a boss.
+After the third boss the loop starts again, tougher.
 
-See `jeeves/projects/hoyry.md` and the hoyry repo.
+1. **Outer Ring**: open space, then a station with floor and ceiling and
+   turrets on them. Boss: the **Warden**.
+2. **Drift**: open space, dense formations from both sides. Boss: the
+   **Serpent**.
+3. **Dock**: a long hull with turrets above and below. Boss: the
+   **Bulwark**.
 
-- Phone first. Twin-stick: drag to steer and aim, tap to fire.
-- Brawl Stars hands: auto-aim on tap, ammo in segments, a super.
-- Borderlands loot: ship parts as type × maker × rarity, named orange parts
-  that break a rule.
-- The Räkkä stack: Vite, TypeScript, React HUD, Canvas 2D, headless sim with
-  a bot behind `make check` and `make balance`.
+## Enemies
 
-## Take from Star Control 2
+Popcorn in snakes and waves, swoopers in V formations, turrets on the
+terrain, gunships that hold and fire fans and rings, chasers that come in
+from behind, carriers that drop power-ups. Killing a whole formation drops
+a power-up too.
 
-- Melee duels, one ship against one ship, with a planet in the arena.
-- Many alien ships. Each has its own main weapon, special, and handling.
-- Star map with systems to visit and explore.
-- Planet landing to mine, find things, and meet aliens.
-- Trading and a story that links the aliens.
+Bullets are few kinds, always the same look: pink orbs with white cores,
+aimed singles, aimed bursts, fans, rings, spirals, and boss beams that
+draw a warning line first.
 
-## How gravity plays a big part
+## Bosses
 
-- Every planet has mass. Ships and shots bend around it.
-- Slingshot: pass close to gain speed. Fast ships can use it to escape.
-- Orbit: a ship in a stable orbit spends no fuel, and can fire from it.
-- Gravity well in combat: a shot can curve round a planet to hit from behind.
-- Crash: low orbit that fails burns the ship. Hull damage is the price.
-- Landing: descend by managing the pull. Heavy planets cost more fuel.
-- Star map: fuel use depends on the gravity of the system you leave.
-- Ship classes differ in thrust to mass. Light ships win in strong wells.
+- **Warden:** a fortress with two gun pods and a core behind a shutter.
+  The core opens to fire and can be hit only while open. Phase 2 when the
+  pods are gone or the core is at 60 %: a turning spiral and a swept beam.
+  Phase 3 at 25 %: rings between the spirals.
+- **Serpent:** a head and ten armoured segments that follow its path.
+  The eye is the weak point. Phase 2: the head fires fans and moves
+  faster. Phase 3: the segments fire rings in turn.
+- **Bulwark:** a battleship with three turrets and two missile hatches.
+  Its bridge sits behind plating that falls when the turrets are gone.
+  Phase 3: the core is out, spirals and beams.
 
-## Open questions for Vesa
+## Later
 
-Answered for the first build above: duel or arena (a real-time arena of
-waves), online duels (no), name (Linko). Still open:
-
-- Is the duel a real-time arena, or does the whole game stay on the map?
-- One ship at a time, or a fleet like Star Control 2?
-- Is landing a separate mini-game, or the same flight in a ground view?
-- How much story? Star Control 2 has a lot of text. Phones suit less.
-- Online duels against other players, like Brawl Stars?
-- Is the loot per ship, or a shared hangar?
-- Name?
+See `TODO.md`: gravity hazard stages, more stages, continues with a
+score cost, Finnish strings, global records.

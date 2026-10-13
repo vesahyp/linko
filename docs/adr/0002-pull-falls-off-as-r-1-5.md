@@ -2,7 +2,7 @@
 adr: 2
 title: The planet's pull falls off as r^-1.5
 date: 2026-10-12
-status: Accepted
+status: Superseded by 0003
 deciders: Vesa
 ---
 

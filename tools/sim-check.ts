@@ -1,15 +1,17 @@
-import { newRun, step, applyUpgrade, startWave, thrustOf } from '../src/game/sim';
-import { createState, DT, NO_INPUT, type SimState } from '../src/game/state';
-import { gravity, orbitSpeed, NO_RETURN, solveAim, angleDiff } from '../src/game/physics';
-import { WAVES } from '../src/game/content';
+import { newRun, step, hurtPart, pickCard, startStage, SHIP_R } from '../src/game/sim';
+import { makeBoss } from '../src/game/bosses';
+import { NO_INPUT, type SimState } from '../src/game/state';
+import { STAGES, heightAt } from '../src/game/content';
 import { playHeadless } from './hand';
 
 /**
  * `make sim-check`: the rules that make Linko what it is, asserted headless.
- * The planet's pull has to hold an orbit, bend a shot, trap a low ship and
- * let the auto-aim shoot round it; the waves have to put several enemies up
- * at once; the hand (a thumb's limits, tools/hand.ts) has to get through the
- * first waves and also die sometimes; a seed has to replay the same run.
+ * Each stage fills the screen and ends in its boss; a boss's armour turns
+ * shots away, its guns can be shot off, its weak point only takes damage
+ * open, and it changes phase; crystals set the gun; the pod docks on the
+ * side it comes home to; a full charge goes through a line of enemies; the
+ * hand (a thumb's limits, tools/hand.ts) beats the first boss most of the
+ * time, dies often enough, and can finish; a seed replays the same run.
  */
 declare const process: { argv: string[]; exitCode?: number };
 
@@ -19,150 +21,158 @@ const check = (ok: boolean, what: string) => {
   if (!ok) failed++;
 };
 
-// a free body in a circular orbit stays on it
-{
-  const s = createState(1);
-  const p = s.planet;
-  const r = 150;
-  let x = p.x + r;
-  let y = p.y;
-  let vx = 0;
-  let vy = -orbitSpeed(r);
-  let lo = r;
-  let hi = r;
-  const period = (2 * Math.PI * r) / orbitSpeed(r);
-  for (let t = 0; t < period * 3; t += DT) {
-    const g = gravity(p, x, y);
-    vx += g.ax * DT;
-    vy += g.ay * DT;
-    x += vx * DT;
-    y += vy * DT;
-    const d = Math.hypot(x - p.x, y - p.y);
-    lo = Math.min(lo, d);
-    hi = Math.max(hi, d);
+/** A ship nothing can hurt, for watching a stage play out. */
+function ghost(s: SimState): SimState {
+  s.ship.invuln = 1e9;
+  return s;
+}
+
+// every stage fills the screen and reaches its boss
+for (let n = 1; n <= STAGES.length; n++) {
+  const s = ghost(newRun(5, n));
+  let most = 0;
+  let mostShots = 0;
+  let boss = false;
+  for (let i = 0; i < 60 * 100 && !boss; i++) {
+    step(s, NO_INPUT);
+    s.sounds.length = 0;
+    most = Math.max(most, s.enemies.length);
+    mostShots = Math.max(mostShots, s.bullets.filter((b) => b.team === 'enemy').length);
+    if (s.boss !== null) boss = true;
   }
-  check(hi / lo < 1.04, `an orbit at r=${r} holds for three turns (radius ${lo.toFixed(1)} to ${hi.toFixed(1)}, period ${period.toFixed(1)} s)`);
+  check(boss, `stage ${n} (${STAGES[n - 1].name}) reaches its boss, the ${STAGES[n - 1].boss}`);
+  check(most >= 10, `stage ${n} has ${most} enemies up at once`);
+  check(mostShots >= 25, `stage ${n} has ${mostShots} enemy shots in the air at once before its boss`);
+  // turrets stand only where there is terrain
+  const def = STAGES[n - 1];
+  const bad = def.script.filter((l) => l.form === 'turret').filter((l) => heightAt(l.at === 'ceil' ? def.ceil : def.floor, l.t * 45 + 800) <= 0);
+  check(bad.length === 0, `stage ${n}: every turret line stands on terrain${bad.length ? ` (not at ${bad.map((l) => l.t).join(', ')} s)` : ''}`);
 }
 
-// a shot past the planet bends
+// a boss's parts
 {
-  const s = createState(1);
-  const p = s.planet;
-  let x = p.x - 200;
-  let y = p.y - 90;
-  let vx = 520;
-  let vy = 0;
-  for (let t = 0; t < 0.9; t += DT) {
-    const g = gravity(p, x, y);
-    vx += g.ax * DT;
-    vy += g.ay * DT;
-    x += vx * DT;
-    y += vy * DT;
-  }
-  const bend = (angleDiff(0, Math.atan2(vy, vx)) * 180) / Math.PI;
-  check(bend > 15, `a main-gun shot passing 90 units from the planet turns ${bend.toFixed(0)} degrees`);
-  let ex = p.x + 250;
-  let ey = p.y - 120;
-  let evx = -185;
-  let evy = 0;
-  for (let t = 0; t < 2; t += DT) {
-    const g = gravity(p, ex, ey);
-    evx += g.ax * DT;
-    evy += g.ay * DT;
-    ex += evx * DT;
-    ey += evy * DT;
-  }
-  const eb = (angleDiff(Math.PI, Math.atan2(evy, evx)) * 180) / Math.PI;
-  check(eb > 40, `an enemy shot passing 120 units from the planet turns ${eb.toFixed(0)} degrees`);
-}
-
-// below the line of no return the engine cannot climb out
-{
-  const climb = (r0: number) => {
-    const s = newRun(3);
-    s.enemies = [];
-    // a group due much later keeps the wave open, so the step runs the ship
-    s.queue = [{ at: 999, kind: 'dart', count: 1, from: 'left' }];
-    s.ship.x = s.planet.x;
-    s.ship.y = s.planet.y - r0;
-    s.ship.vx = 0;
-    s.ship.vy = 0;
-    s.ship.invuln = 99;
-    for (let i = 0; i < 60; i++) step(s, { ...NO_INPUT, mx: 0, my: -1 });
-    return Math.hypot(s.ship.x - s.planet.x, s.ship.y - s.planet.y);
-  };
-  const low = climb(NO_RETURN - 12);
-  const high = climb(NO_RETURN + 25);
-  check(low < NO_RETURN - 12, `from rest ${Math.round(NO_RETURN - 12)} units out, full thrust away still falls (to ${low.toFixed(0)})`);
-  check(high > NO_RETURN + 25, `from rest ${Math.round(NO_RETURN + 25)} units out, full thrust climbs (to ${high.toFixed(0)}); no return at ${NO_RETURN.toFixed(0)}, thrust ${thrustOf(newRun(1))}`);
-}
-
-// the auto-aim shoots round the planet at a target hidden behind it
-{
-  const s = createState(1);
-  const p = s.planet;
-  const sol = solveAim(p, p.x - 200, p.y, 0, 0, 400, p.x + 220, p.y, 0, 0, 1.6, 14);
-  const direct = 0;
-  check(!!sol && angleDiff(sol.angle, direct) > 0.08, `a target straight behind the planet gets a curved charge shot (launched ${sol ? ((angleDiff(sol.angle, direct) * 180) / Math.PI).toFixed(0) : '-'} degrees off the line)`);
-}
-
-// several enemies at once: the most on the field in each of the six waves
-{
-  for (let w = 1; w <= WAVES.length; w++) {
-    const s = newRun(5);
-    s.enemies = [];
-    startWave(s, w);
-    s.ship.invuln = 1e9;
-    let most = 0;
-    for (let i = 0; i < 60 * 20; i++) {
-      step(s, NO_INPUT);
-      most = Math.max(most, s.enemies.length);
-      if (s.phase !== 'fight') break;
+  const s = ghost(newRun(5, 1));
+  const w = makeBoss(s, 'warden');
+  const core = w.parts!.find((p) => p.kind === 'weak')!;
+  const hull = w.parts!.find((p) => p.kind === 'armor')!;
+  const gun = w.parts!.find((p) => p.kind === 'gun')!;
+  core.open = false;
+  const hp0 = w.hp;
+  check(!hurtPart(s, w, hull, 10, 0, 0) && w.hp === hp0, 'armour turns a shot away');
+  check(!hurtPart(s, w, core, 10, 0, 0) && w.hp === hp0, 'a shut weak point turns a shot away');
+  core.open = true;
+  check(hurtPart(s, w, core, 10, 0, 0) && w.hp === hp0 - 10, 'an open weak point takes the damage');
+  hurtPart(s, w, gun, 1e6, 0, 0);
+  check(gun.dead, 'a boss gun can be shot off');
+  const phases = new Set<number>();
+  for (const kind of ['warden', 'serpent', 'bulwark'] as const) {
+    const t = ghost(newRun(5, 1));
+    const b = makeBoss(t, kind);
+    phases.clear();
+    for (const f of [1, 0.5, 0.2]) {
+      b.hp = b.maxHp * f;
+      // the Bulwark's phase 2 is its turrets shot off, not its hull
+      if (kind === 'bulwark' && f < 1) for (const p of b.parts!) if (p.name.startsWith('turret')) p.dead = true;
+      for (let i = 0; i < 30; i++) step(t, NO_INPUT);
+      phases.add(b.phase);
     }
-    check(most >= 6, `wave ${w} (${WAVES[w - 1].name}) has ${most} enemies up at once`);
+    check(phases.size === 3, `the ${kind} goes through three phases (${[...phases].join(', ')})`);
   }
 }
 
-// an upgrade shows in the numbers
+// crystals and items
 {
-  const s = newRun(1);
-  applyUpgrade(s, 'armor');
-  check(s.ship.maxHp === 140 && s.ship.hp === 140, 'Hull Plates raises and repairs the hull');
+  const s = ghost(newRun(5, 1));
+  const at = (kind: Parameters<typeof s.drops.push>[0]['kind']) => {
+    s.drops.push({ x: s.ship.x, y: s.ship.y, kind, t: 0 });
+    step(s, NO_INPUT);
+  };
+  at('red');
+  const a = `${s.ship.gun} ${s.ship.gunLevel}`;
+  at('red');
+  const b = `${s.ship.gun} ${s.ship.gunLevel}`;
+  at('blue');
+  const c = `${s.ship.gun} ${s.ship.gunLevel}`;
+  check(a === 'spread 1' && b === 'spread 2' && c === 'laser 2', `crystals: red sets the spread, red again raises it, blue changes to the laser and keeps the level (${a}, ${b}, ${c})`);
+  at('speed');
+  at('missile');
+  at('bit');
+  check(s.ship.speed === 1 && s.ship.missiles === 1 && s.ship.bits === 1, 'S, M and B items each add their part');
 }
 
-// the hand: through the first waves, and it can die
+// the pod launches, holds, comes home, and docks on the side it comes from
+{
+  const s = ghost(newRun(5, 1));
+  step(s, { ...NO_INPUT, pod: true });
+  for (let i = 0; i < 90; i++) step(s, NO_INPUT);
+  const out = s.pod.mode === 'out' && s.pod.x > 500;
+  // fly past it, then call it home from in front: it docks behind
+  for (let i = 0; i < 150; i++) step(s, { ...NO_INPUT, target: { x: 740, y: s.ship.y } });
+  step(s, { ...NO_INPUT, target: { x: 740, y: s.ship.y }, pod: true });
+  for (let i = 0; i < 90; i++) step(s, { ...NO_INPUT, target: { x: 740, y: s.ship.y } });
+  check(out && s.pod.mode === 'back', `the pod flies out ahead, and docks behind when it comes home from behind (${s.pod.mode})`);
+}
+
+// a full charge goes through a line of enemies
+{
+  const s = ghost(newRun(5, 1));
+  s.cursor = 1e9;
+  s.enemies = [];
+  for (let i = 0; i < 6; i++) {
+    const e = makeLine(s, 300 + i * 30);
+    e.vx = 0;
+  }
+  for (let i = 0; i < 70; i++) step(s, { ...NO_INPUT, charging: true });
+  step(s, { ...NO_INPUT, release: true });
+  for (let i = 0; i < 40; i++) step(s, NO_INPUT);
+  const left = s.enemies.filter((e) => e.hp > 0).length;
+  check(left === 0, `a full charge goes through a line of six popcorn (${6 - left} down)`);
+}
+
+function makeLine(s: SimState, x: number) {
+  const id = s.nextId++;
+  const en = {
+    id, kind: 'popcorn' as const, x, y: s.ship.y, vx: 0, vy: 0, hp: 2, maxHp: 2, r: 8, angle: Math.PI, t: 0, gunCd: 99, burst: 0, flash: 0,
+    formation: 0, index: 0, y0: s.ship.y, d: 0, anchor: null, drop: null, seed: 0, parts: null, phase: 1, trail: null,
+  };
+  s.enemies.push(en);
+  return en;
+}
+
+// the hand: beats the first boss most of the time, dies often enough, can finish
 {
   const runs = 12;
-  let past3 = 0;
+  let warden = 0;
   let deaths = 0;
-  let bent = 0;
-  let hits = 0;
-  let planetKills = 0;
-  const reached: number[] = [];
+  let all = 0;
+  const ends: string[] = [];
   for (let i = 0; i < runs; i++) {
-    const s = playHeadless(newRun(2000 + i * 31), step, 12);
-    const ts = [...s.waveTallies, s.tally];
-    bent += ts.reduce((a, t) => a + t.bentHits, 0);
-    hits += ts.reduce((a, t) => a + t.hits, 0);
-    planetKills += ts.reduce((a, t) => a + t.planetKills, 0);
-    const cleared = s.ship.dead ? s.wave - 1 : s.wave;
-    reached.push(cleared);
-    if (cleared >= 3) past3++;
+    const s = playHeadless(newRun(3000 + i * 31), step, 3);
+    const ts = [...s.stageTallies, ...(s.phase === 'pick' ? [] : [s.tally])];
+    const bosses = ts.reduce((a, t) => a + t.bosses, 0);
+    if (bosses >= 1) warden++;
+    if (bosses >= 3) all++;
     if (s.ship.dead) deaths++;
+    ends.push(s.ship.dead ? `lost ${s.stage}${s.boss !== null ? 'B' : ''}` : 'clear');
   }
-  reached.sort((a, b) => a - b);
-  console.log(`      hand, ${runs} runs: waves cleared ${reached.join(' ')}`);
-  check(past3 >= runs * 0.75, `the hand clears wave 3 in ${past3} of ${runs} runs`);
-  check(deaths >= 2, `the hand dies by wave 12 in ${deaths} of ${runs} runs`);
-  check(bent / hits > 0.15, `${Math.round((100 * bent) / hits)}% of the hand's hits curved round the planet`);
-  check(planetKills > runs * 5, `${planetKills} enemies hit the planet over the runs`);
+  console.log(`      hand, ${runs} runs: ${ends.join(' ')}`);
+  check(warden >= runs * 0.75, `the hand beats the Warden in ${warden} of ${runs} runs`);
+  check(deaths >= runs * 0.25, `the hand loses its ship in ${deaths} of ${runs} runs`);
+  check(all >= 1, `the hand clears all three stages in ${all} of ${runs} runs`);
 }
 
-// a seed replays the same run
+// a seed replays the same run; a card leads to the next stage
 {
-  const a = playHeadless(newRun(77), step, 4) as SimState;
-  const b = playHeadless(newRun(77), step, 4) as SimState;
+  const a = playHeadless(newRun(77), step, 1);
+  const b = playHeadless(newRun(77), step, 1);
   check(a.score === b.score && a.time === b.time, `seed 77 replays the same run (score ${a.score}, ${a.time.toFixed(1)} s)`);
+  const s = newRun(9, 1);
+  s.phase = 'pick';
+  s.offers = ['plates', 'capacitor', 'magnet'];
+  pickCard(s, 'plates');
+  check(s.stage === 2 && s.ship.maxHp === 140, 'a card after stage 1 raises the hull and starts stage 2');
+  startStage(s, 3, 0);
+  void SHIP_R;
 }
 
 if (failed) {

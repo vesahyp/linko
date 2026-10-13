@@ -9,7 +9,7 @@
 #   make sim-check     # the planet's rules, the waves, the hand's runs, headless
 #   make balance       # the hand plays RUNS runs to WAVES waves, one line each (RUNS ?= 12 WAVES ?= 12)
 #   make shots-setup   # once: install Playwright and Chromium
-#   make playthrough   # the hand plays on an emulated iPhone by real touches, on video (SEED ?= 7 UPTO ?= 6)
+#   make playthrough   # the hand plays on an emulated iPhone by real touches, on video (SEED ?= 7 UPTO ?= 3 stages)
 #   make sheets        # frame sheets of the last playthrough, twelve frames each
 
 .PHONY: dev build preview check sim-check balance shots-setup playthrough sheets
@@ -41,7 +41,7 @@ shots-setup:
 	npm install --no-save playwright && npx playwright install chromium
 
 SEED ?= 7
-UPTO ?= 6
+UPTO ?= 3
 playthrough:
 	SEED=$(SEED) WAVES=$(UPTO) node scripts/playthrough.mjs
 

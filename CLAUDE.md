@@ -44,6 +44,7 @@ src/
     input.ts            relative drag on the left, hold to charge on the right, the pod button,
                           keyboard
     stick.ts            the drag rule (GAIN, MOVE_ZONE), shared with the hand
+  ui/safe.ts            the safe area (and the ?safe= knob), fullscreen where the browser allows it
   ui/Game.tsx           the game loop (fixed step), HUD, boss bar, beam meter, card pick, pause
   App.tsx               title, the end screen with continue, the local best score
   audio.ts              Web Audio synth
@@ -59,6 +60,8 @@ scripts/
                           every input a real touch (CDP), on video
   sheet.mjs             make sheets: the playthrough's frames in grids
   boss-shots.mjs        make boss-shots: each boss mid-fight
+  screen-check.mjs      make screen-check: the play screen fills the phone, inside its safe area
+  icons.mjs             make icons: the home-screen PNGs from public/icon.svg
 ```
 
 ## Rules
@@ -88,7 +91,7 @@ scripts/
 
 - `make dev` (http://localhost:5173).
 - **Before committing:** `make check` must pass (typecheck, build,
-  `sim-check`, `playthrough`). The playthrough needs `make shots-setup` once.
+  `sim-check`, `screen-check`, `playthrough`). The playthrough needs `make shots-setup` once.
   It takes about seven minutes: it plays all three stages in real time.
 - **Judge it by thumb, never by the bot winning.** A balance or feel change
   is proved with the hand: `make balance` for the numbers over many seeds
@@ -96,7 +99,14 @@ scripts/
   playthrough` and `make sheets`, and look at the frames before reporting.
   As of 2026-10-14, over 24 seeds the hand loses 4 runs in stage 1, 6 to
   the Serpent and 5 in the Dock, and clears all three stages in 9.
-- **URL knobs:** `?seed=N` fixes the run, `?stage=N` starts on stage N with
+- **The screen:** `make screen-check` proves the play screen fills an
+  iPhone 15 in landscape two ways: the whole 852x393 screen as from the
+  home screen, with the notch and home-bar insets stood in by
+  `?safe=59,59,0,21` (Chromium's emulation has no notch), and Playwright's
+  734x343 preset, the page Safari leaves beside its bars. Every inset in
+  CSS goes through `--safe-*` (`src/ui/safe.ts`), never `env()` directly,
+  so the knob reaches it.
+- **URL knobs:** `?safe=l,r,t,b` stands in for the safe area, `?seed=N` fixes the run, `?stage=N` starts on stage N with
   the build a run has by then, `?boss=1` skips to the stage's boss,
   `?god=1` keeps the ship alive (screenshots), `?speed=2` runs the sim
   faster, `?hand=1` lets the hand publish its thumbs.

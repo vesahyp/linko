@@ -16,8 +16,9 @@ The design is in `docs/design.md`.
   repository variable, and add the stats board
   (`jeeves/practices/web-tracking.md`).
 - Finnish strings beside the English ones (`i18n.ts` as in hoyry).
-- A home-screen icon in PNG for iOS (`apple-touch-icon.png`), and a new
-  icon: the current one is still the planet.
+- Check on a real iPhone that the home-screen install opens with no
+  browser bars and the notch inset lands where `make screen-check` assumes
+  (59 px each side, 21 px for the home bar).
 
 ## Later
 

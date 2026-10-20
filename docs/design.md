@@ -50,6 +50,20 @@ points. Landscape, one thumb to fly, the other optional.
 Three stages, each a timed script of about ninety seconds, then a boss.
 After the third boss the loop starts again, tougher.
 
+**The opening teaches.** Vesa, 2026-10-20: the first build was "too
+full-on straight from the start". Stage 1's first half minute brings one
+thing at a time, each with a hint under the play: slow ships that never
+fire (fly), a straight row that one beam takes (charge), a lone carrier
+with the first crystal (pick up), then the pod and the first slow shots.
+Only after about 30 s does the pace rise toward the Warden.
+
+## The screen
+
+The play area fits inside the safe area; the stage is drawn on past it to
+every edge, under the notch too, so nothing is letterboxed. iPhone Safari
+gives a page no fullscreen, so the title screen tells an iPhone player to
+add the game to the home screen, where it runs with no browser around it.
+
 1. **Outer Ring**: open space, then a station with floor and ceiling and
    turrets on them. Boss: the **Warden**.
 2. **Drift**: open space, dense formations from both sides. Boss: the

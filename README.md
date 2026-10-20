@@ -5,8 +5,15 @@ stage that scrolls, formations to break, bullets to read and dodge, a charge
 beam, a pod, and bosses with phases and weak points.
 **Play: https://vesahyp.github.io/linko/**
 
+**Full screen on iPhone:** Safari keeps its bars on any web page, so add the
+game to the home screen (Share, then Add to Home Screen) and play from its
+icon. It then fills the whole screen. On Android and iPad the game asks for
+full screen itself when you tap Play.
+
 ## How to play
 
+- **Stage 1 starts slow** and shows a hint for each thing to try: fly,
+  charge, pick up a crystal, launch the pod. Then the pace rises.
 - **Left thumb: drag to fly.** Put your thumb down anywhere on the left
   two thirds of the screen and move it; the ship moves with it, a little
   further than your thumb. Lift and put it down again to go further.

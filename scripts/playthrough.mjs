@@ -6,8 +6,8 @@
 // lifts to fire; a tap on the pod button; a tap on a card between stages. The
 // hand only says where its thumbs are; this script puts them on the glass.
 //
-// `make playthrough [SEED=7] [UPTO=3]` plays until the ship is lost or UPTO
-// stages are cleared. Needs `make shots-setup` once. Serves a production build
+// `make playthrough [SEED=7] [UPTO=3] [SAFE=59,59,0,21]` plays until the ship is lost or UPTO
+// stages are cleared, with the iPhone's safe area stood in (?safe=). Needs `make shots-setup` once. Serves a production build
 // (the dev server hot-reloads mid-run when a file is saved). Writes
 // shots/playthrough/: run.webm, a screenshot every two seconds, the title, the
 // cards and the end screen, and summary.json. Exits non-zero when the page
@@ -49,7 +49,9 @@ const check = (ok, what) => {
 };
 const phone = devices['iPhone 15 landscape'];
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ ...phone, hasTouch: true, recordVideo: { dir: join(OUT, 'tmp'), size: phone.viewport } });
+// the whole screen, as the game runs from the home screen (make screen-check covers Safari's smaller page)
+const screen = { width: 852, height: 393 };
+const ctx = await browser.newContext({ ...phone, viewport: screen, screen, hasTouch: true, recordVideo: { dir: join(OUT, 'tmp'), size: screen } });
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
@@ -60,7 +62,7 @@ const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type
 let summary = null;
 const STAGES_UPTO = Number(process.env.WAVES || 3);
 try {
-  await page.goto(`http://localhost:${port}/linko/?hand=1&seed=${SEED}`);
+  await page.goto(`http://localhost:${port}/linko/?hand=1&seed=${SEED}${process.env.SAFE ? `&safe=${process.env.SAFE}` : ''}`);
   await page.screenshot({ path: `${OUT}/title.png` });
   await page.getByRole('button', { name: 'Play', exact: true }).tap();
   await page.waitForFunction(() => window.__sim && window.__hand && window.__layout, null, { timeout: 15000 });

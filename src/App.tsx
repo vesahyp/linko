@@ -4,6 +4,7 @@ import { UpdateBanner } from './ui/Update';
 import { BUILD_NAME } from './version';
 import { STAGES } from './game/content';
 import type { SimState } from './game/state';
+import { goFullscreen, iPhoneSafari } from './ui/safe';
 
 type Screen = { kind: 'title' } | { kind: 'run'; seed: number; from: SimState | null } | { kind: 'dead'; r: RunSummary; best: boolean };
 
@@ -22,6 +23,7 @@ export default function App() {
   const [best, setBest] = useState(loadBest);
 
   const start = () => {
+    goFullscreen();
     const asked = Number(new URLSearchParams(location.search).get('seed'));
     setScreen({ kind: 'run', seed: asked || (Date.now() ^ (Math.random() * 1e9)) >>> 0, from: null });
   };
@@ -69,6 +71,7 @@ export default function App() {
               Shoot the <b>glass carriers</b> for crystals: red spread, blue laser, yellow homing.
             </li>
           </ul>
+          {iPhoneSafari() && <p className="install">For full screen on iPhone: tap Share, then Add to Home Screen, and play from the home screen icon.</p>}
           <p className="foot">
             {best ? `Best ${best.toLocaleString('en')} · ` : ''}build {BUILD_NAME}
           </p>

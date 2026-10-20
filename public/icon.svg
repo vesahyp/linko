@@ -1,7 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#070a18"/>
-  <ellipse cx="256" cy="256" rx="200" ry="70" fill="none" stroke="#3fd8ff" stroke-width="14" stroke-dasharray="40 26" transform="rotate(-24 256 256)"/>
-  <circle cx="256" cy="256" r="92" fill="#e0884a"/>
-  <path d="M170 228h172M166 262h180M178 296h156" stroke="#b55a2e" stroke-width="16" stroke-linecap="round"/>
-  <path d="M396 150l-40 12 22 22z" fill="#ffffff"/>
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.4" stop-color="#7ae8ff"/>
+      <stop offset="1" stop-color="#1a7fd6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#070a1e"/>
+  <g fill="#ff4fa0"><circle cx="400" cy="120" r="14"/><circle cx="430" cy="190" r="14"/><circle cx="410" cy="390" r="14"/></g>
+  <g fill="#fff"><circle cx="400" cy="120" r="6"/><circle cx="430" cy="190" r="6"/><circle cx="410" cy="390" r="6"/></g>
+  <path d="M300 256h150" stroke="#7ae8ff" stroke-width="18" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="300" cy="256" r="58" fill="url(#glow)"/>
+  <path d="M286 256 L210 234 L170 230 L132 168 L100 168 L118 232 L84 238 L84 274 L118 280 L100 344 L132 344 L170 282 L210 278 Z" fill="#e8edf7" stroke="#26345c" stroke-width="6" stroke-linejoin="round"/>
+  <ellipse cx="200" cy="256" rx="30" ry="12" fill="#3fd8ff"/>
+  <path d="M84 246 L30 256 L84 266 Z" fill="#7ab8ff"/>
 </svg>

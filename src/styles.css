@@ -1,4 +1,9 @@
 :root {
+  /* the safe area, from the device; ?safe=l,r,t,b sets these for a test (src/ui/safe.ts) */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
   --bg: #03040c;
   --ink: #e8f0ff;
   --dim: #8b98bd;
@@ -96,9 +101,9 @@ canvas {
 /* the HUD rides the top edge of the safe area */
 .hud {
   position: absolute;
-  top: max(6px, env(safe-area-inset-top));
-  left: max(10px, env(safe-area-inset-left));
-  right: max(10px, env(safe-area-inset-right));
+  top: max(6px, var(--safe-t));
+  left: max(10px, var(--safe-l));
+  right: max(10px, var(--safe-r));
   display: flex;
   align-items: center;
   gap: 14px;
@@ -144,7 +149,7 @@ canvas {
 }
 .bossbar {
   position: absolute;
-  top: calc(max(6px, env(safe-area-inset-top)) + 34px);
+  top: calc(max(6px, var(--safe-t)) + 34px);
   left: 50%;
   transform: translateX(-50%);
   width: min(380px, 50vw);
@@ -170,7 +175,7 @@ canvas {
 }
 .beam {
   position: absolute;
-  bottom: max(8px, env(safe-area-inset-bottom));
+  bottom: max(8px, var(--safe-b));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -254,8 +259,8 @@ canvas {
   justify-content: center;
   gap: 10px;
   background: rgba(3, 4, 12, 0.72);
-  padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+  padding: max(10px, var(--safe-t)) max(16px, var(--safe-r)) max(10px, var(--safe-b))
+    max(16px, var(--safe-l));
 }
 .overlay h2 {
   margin: 0;
@@ -326,8 +331,8 @@ canvas {
   justify-content: center;
   gap: 10px;
   text-align: center;
-  padding: max(12px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
-    max(20px, env(safe-area-inset-left));
+  padding: max(12px, var(--safe-t)) max(20px, var(--safe-r)) max(12px, var(--safe-b))
+    max(20px, var(--safe-l));
   background: radial-gradient(ellipse at 50% 60%, #1a1440 0%, #03040c 70%);
 }
 .title h1 {
@@ -389,8 +394,8 @@ canvas {
 }
 .update {
   position: fixed;
-  right: max(10px, env(safe-area-inset-right));
-  bottom: max(10px, env(safe-area-inset-bottom));
+  right: max(10px, var(--safe-r));
+  bottom: max(10px, var(--safe-b));
   display: flex;
   gap: 10px;
   align-items: center;
@@ -434,4 +439,26 @@ canvas {
   .how {
     font-size: 12px;
   }
+}
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(8px, var(--safe-b)) + 22px);
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(10, 16, 40, 0.75);
+  border: 1px solid rgba(111, 230, 255, 0.4);
+  color: #dff8ff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 2px #000;
+}
+.install {
+  margin: 0;
+  max-width: 520px;
+  font-size: 12px;
+  color: #ffd9a8;
 }

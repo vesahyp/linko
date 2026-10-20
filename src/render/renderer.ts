@@ -3,8 +3,10 @@ import { ENEMIES, STAGES, GUN_COLOR, DROP_COLOR, DROP_LABEL, heightAt } from '..
 import { podRadius } from '../game/sim';
 
 /**
- * Canvas 2D. The screen (W by H world units) is fitted inside the safe
- * area; everything is drawn in world units under one transform. The sky is
+ * Canvas 2D. The play area (W by H world units) is fitted inside the safe
+ * area, and the stage is drawn on past it to every edge of the screen, under
+ * the notch too, so nothing is letterboxed. Everything is drawn in world
+ * units under one transform. The sky is
  * drawn once per stage and size and cached; stars, terrain and the rest
  * every frame. Cosmetic randomness uses Math.random, never the sim's stream.
  */
@@ -21,6 +23,8 @@ export class Renderer {
   ox = 0;
   oy = 0;
   private dpr = 1;
+  /** the whole canvas in world units: wider than 0..W when the screen is */
+  private view = { x0: 0, x1: W, y0: 0, y1: H };
 
   constructor(private canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext('2d')!;
@@ -38,6 +42,7 @@ export class Renderer {
     this.scale = Math.min(aw / W, ah / H);
     this.ox = inset.l + (aw - W * this.scale) / 2;
     this.oy = inset.t + (ah - H * this.scale) / 2;
+    this.view = { x0: -this.ox / this.scale, x1: (w - this.ox) / this.scale, y0: -this.oy / this.scale, y1: (h - this.oy) / this.scale };
   }
 
   toScreen(x: number, y: number): { x: number; y: number } {
@@ -57,11 +62,12 @@ export class Renderer {
     g.fillRect(0, 0, c.width, c.height);
     const k = this.dpr * this.scale;
     g.setTransform(k, 0, 0, k, this.dpr * this.ox, this.dpr * this.oy);
-    const grad = g.createLinearGradient(0, 0, 0, H);
+    const v = this.view;
+    const grad = g.createLinearGradient(0, v.y0, 0, v.y1);
     grad.addColorStop(0, def.sky[0]);
     grad.addColorStop(1, def.sky[1]);
     g.fillStyle = grad;
-    g.fillRect(0, 0, W, H);
+    g.fillRect(v.x0 - 2, v.y0 - 2, v.x1 - v.x0 + 4, v.y1 - v.y0 + 4);
     const neb = (x: number, y: number, r: number, col: string) => {
       const n = g.createRadialGradient(x, y, 0, x, y, r);
       n.addColorStop(0, col);
@@ -104,9 +110,6 @@ export class Renderer {
     const k = this.dpr * this.scale;
     g.setTransform(k, 0, 0, k, this.dpr * this.ox + sx, this.dpr * this.oy + sy);
     g.save();
-    g.beginPath();
-    g.rect(0, 0, W, H);
-    g.clip();
     this.drawStars(s);
     this.drawTerrain(s);
     for (const d of s.drops) this.drawDrop(d, s);
@@ -135,12 +138,16 @@ export class Renderer {
     ];
     let seed = 11;
     const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const v = this.view;
+    const span = v.x1 - v.x0;
+    const tall = v.y1 - v.y0;
     for (const L of layers) {
       g.fillStyle = `rgba(210,225,255,${L.a})`;
-      for (let i = 0; i < L.n; i++) {
-        const x0 = rnd() * W;
-        const y = rnd() * H;
-        const x = (((x0 - s.scroll * L.speed) % W) + W) % W;
+      const n = Math.round((L.n * span) / W);
+      for (let i = 0; i < n; i++) {
+        const x0 = rnd() * span;
+        const y = v.y0 + rnd() * tall;
+        const x = v.x0 + ((((x0 - s.scroll * L.speed) % span) + span) % span);
         if (L.speed > 1) {
           g.globalAlpha = 0.35;
           g.fillRect(x, y, 14, 0.8);
@@ -153,22 +160,27 @@ export class Renderer {
   private drawTerrain(s: SimState): void {
     const def = STAGES[s.stage - 1];
     const g = this.ctx;
+    const v = this.view;
+    const x0 = Math.floor(v.x0 / 8) * 8 - 8;
     for (const side of ['floor', 'ceil'] as const) {
       const pts = side === 'floor' ? def.floor : def.ceil;
       if (pts.length === 1 && pts[0][1] === 0) continue;
+      const xs: number[] = [];
       const ys: number[] = [];
       let any = false;
-      for (let x = -8; x <= W + 8; x += 8) {
+      for (let x = x0; x <= v.x1 + 8; x += 8) {
         const h = heightAt(pts, s.scroll + x);
         if (h > 0) any = true;
+        xs.push(x);
         ys.push(h);
       }
       if (!any) continue;
+      const far = side === 'floor' ? v.y1 + 2 : v.y0 - 2;
       const edge = (i: number) => (side === 'floor' ? H - ys[i] : ys[i]);
       g.beginPath();
-      g.moveTo(-8, side === 'floor' ? H + 2 : -2);
-      ys.forEach((_, i) => g.lineTo(-8 + i * 8, edge(i)));
-      g.lineTo(W + 8, side === 'floor' ? H + 2 : -2);
+      g.moveTo(xs[0], far);
+      ys.forEach((_, i) => g.lineTo(xs[i], ys[i] > 0 ? edge(i) : far));
+      g.lineTo(xs[xs.length - 1], far);
       g.closePath();
       const gr = g.createLinearGradient(0, side === 'floor' ? H - 90 : 90, 0, side === 'floor' ? H : 0);
       gr.addColorStop(0, def.metal);
@@ -181,15 +193,15 @@ export class Renderer {
       g.strokeStyle = 'rgba(0,0,0,0.35)';
       g.lineWidth = 1;
       const off = -(s.scroll % 48);
-      for (let x = off; x < W; x += 48) {
+      for (let x = off + Math.floor(v.x0 / 48) * 48; x < v.x1; x += 48) {
         g.beginPath();
-        g.moveTo(x, 0);
-        g.lineTo(x, H);
+        g.moveTo(x, v.y0);
+        g.lineTo(x, v.y1);
         g.stroke();
       }
       g.fillStyle = 'rgba(255,170,80,0.7)';
-      for (let x = off + 24; x < W; x += 96) {
-        const i = Math.round((x + 8) / 8);
+      for (let x = off + 24 + Math.floor(v.x0 / 96) * 96; x < v.x1; x += 96) {
+        const i = Math.round((x - x0) / 8);
         if (i < 0 || i >= ys.length || ys[i] <= 0) continue;
         if (Math.floor(s.time * 2 + x) % 2 === 0) g.fillRect(x, side === 'floor' ? edge(i) + 8 : edge(i) - 10, 3, 2);
       }
@@ -204,8 +216,8 @@ export class Renderer {
           started = false;
           return;
         }
-        if (!started) g.moveTo(-8 + i * 8, edge(i));
-        else g.lineTo(-8 + i * 8, edge(i));
+        if (!started) g.moveTo(xs[i], edge(i));
+        else g.lineTo(xs[i], edge(i));
         started = true;
       });
       g.stroke();

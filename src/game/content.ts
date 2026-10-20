@@ -66,7 +66,7 @@ export const CARD_BY_ID = Object.fromEntries(CARDS.map((c) => [c.id, c])) as Rec
 
 // ---------------------------------------------------------------- stages
 
-export type Form = 'snake' | 'wall' | 'v' | 'rear' | 'gunship' | 'carrier' | 'turret' | 'spinner' | 'boss';
+export type Form = 'snake' | 'row' | 'wall' | 'v' | 'rear' | 'gunship' | 'carrier' | 'turret' | 'spinner' | 'boss' | 'hint';
 
 /** One line of a stage script: a formation that arrives `t` seconds in. */
 export interface Line {
@@ -77,6 +77,12 @@ export interface Line {
   y?: number;
   at?: 'floor' | 'ceil';
   drop?: DropKind;
+  /** popcorn speed, world units a second (150 when left out) */
+  speed?: number;
+  /** these never fire: the opening's practice targets */
+  quiet?: boolean;
+  /** a hint line under the play, on the first round only */
+  text?: string;
 }
 
 export interface StageDef {
@@ -106,68 +112,77 @@ export const STAGES: StageDef[] = [
   {
     name: 'Outer Ring',
     boss: 'warden',
-    // open space, then the station from about 38 s to 74 s
+    // open space, then the station from about 41 s to 95 s
     floor: [
       [0, 0],
-      [1650, 0],
-      [1700, 46],
-      [2000, 46],
-      [2060, 74],
-      [2350, 74],
-      [2400, 40],
-      [2900, 40],
-      [2950, 64],
-      [3250, 64],
-      [3320, 0],
+      [2595, 0],
+      [2645, 46],
+      [2945, 46],
+      [3005, 74],
+      [3295, 74],
+      [3345, 40],
+      [3845, 40],
+      [3895, 64],
+      [4195, 64],
+      [4265, 0],
     ],
     ceil: [
       [0, 0],
-      [1700, 0],
-      [1760, 40],
-      [2200, 40],
-      [2260, 66],
-      [2600, 66],
-      [2660, 36],
-      [3200, 36],
-      [3300, 0],
+      [2645, 0],
+      [2705, 40],
+      [3145, 40],
+      [3205, 66],
+      [3545, 66],
+      [3605, 36],
+      [4145, 36],
+      [4245, 0],
     ],
     sky: ['#0b1030', '#03040c'],
     metal: '#56607e',
     script: [
-      { t: 1.5, form: 'snake', n: 6, y: 0.3 },
-      { t: 4, form: 'snake', n: 6, y: 0.7 },
-      { t: 7, form: 'v', n: 5, y: 0.5 },
-      { t: 9.5, form: 'carrier', y: 0.4, drop: 'red' },
-      { t: 11, form: 'snake', n: 8, y: 0.5 },
-      { t: 14, form: 'gunship', y: 0.3 },
-      { t: 16, form: 'rear', n: 3, y: 0.7 },
-      { t: 18, form: 'v', n: 5, y: 0.25 },
-      { t: 19, form: 'v', n: 5, y: 0.75 },
-      { t: 22, form: 'carrier', y: 0.6, drop: 'speed' },
-      { t: 23, form: 'wall', n: 7 },
-      { t: 26, form: 'wall', n: 7 },
-      { t: 28, form: 'gunship', y: 0.7 },
-      { t: 30, form: 'snake', n: 8, y: 0.35 },
-      { t: 32, form: 'carrier', y: 0.5, drop: 'blue' },
-      { t: 34, form: 'snake', n: 8, y: 0.65 },
-      ...turrets(21, 53, 2.2),
-      { t: 40, form: 'snake', n: 6, y: 0.5 },
-      { t: 44, form: 'carrier', y: 0.5, drop: 'missile' },
-      { t: 46, form: 'v', n: 5, y: 0.5 },
-      { t: 50, form: 'rear', n: 4, y: 0.5 },
-      { t: 53, form: 'gunship', y: 0.5 },
-      { t: 57, form: 'snake', n: 8, y: 0.4 },
-      { t: 60, form: 'carrier', y: 0.5, drop: 'bit' },
-      { t: 62, form: 'v', n: 5, y: 0.6 },
-      { t: 66, form: 'snake', n: 8, y: 0.55 },
-      { t: 69, form: 'gunship', y: 0.4 },
-      { t: 72, form: 'snake', n: 8, y: 0.3 },
-      { t: 74, form: 'snake', n: 8, y: 0.7 },
-      { t: 76, form: 'v', n: 5, y: 0.3 },
-      { t: 77, form: 'v', n: 5, y: 0.7 },
-      { t: 79, form: 'carrier', y: 0.5, drop: 'repair' },
-      { t: 80, form: 'wall', n: 7 },
-      { t: 84, form: 'boss' },
+      // the opening teaches, one thing at a time: fly, charge, pick up, the pod; then the pace rises
+      { t: 0.5, form: 'hint', text: 'Drag on the left side to fly' },
+      { t: 3, form: 'snake', n: 3, y: 0.5, speed: 70, quiet: true },
+      { t: 7, form: 'snake', n: 3, y: 0.3, speed: 80, quiet: true },
+      { t: 10, form: 'snake', n: 3, y: 0.7, speed: 80, quiet: true },
+      { t: 13, form: 'hint', text: 'Hold on the right side to charge · lift to fire' },
+      { t: 14, form: 'row', n: 5, y: 0.5, speed: 60, quiet: true },
+      { t: 19, form: 'hint', text: 'Shoot the glass carrier for a crystal' },
+      { t: 19.5, form: 'carrier', y: 0.45, drop: 'red' },
+      { t: 24, form: 'hint', text: 'Tap POD to launch the pod · tap again to call it back' },
+      { t: 24, form: 'snake', n: 5, y: 0.35, speed: 110 },
+      { t: 27, form: 'v', n: 3, y: 0.6 },
+      { t: 30, form: 'snake', n: 6, y: 0.65, speed: 130 },
+      { t: 32, form: 'snake', n: 8, y: 0.5 },
+      { t: 35, form: 'gunship', y: 0.3 },
+      { t: 37, form: 'rear', n: 3, y: 0.7 },
+      { t: 39, form: 'v', n: 5, y: 0.25 },
+      { t: 40, form: 'v', n: 5, y: 0.75 },
+      { t: 43, form: 'carrier', y: 0.6, drop: 'speed' },
+      { t: 44, form: 'wall', n: 7 },
+      { t: 47, form: 'wall', n: 7 },
+      { t: 49, form: 'gunship', y: 0.7 },
+      { t: 51, form: 'snake', n: 8, y: 0.35 },
+      { t: 53, form: 'carrier', y: 0.5, drop: 'blue' },
+      { t: 55, form: 'snake', n: 8, y: 0.65 },
+      ...turrets(42, 74, 2.2),
+      { t: 61, form: 'snake', n: 6, y: 0.5 },
+      { t: 65, form: 'carrier', y: 0.5, drop: 'missile' },
+      { t: 67, form: 'v', n: 5, y: 0.5 },
+      { t: 71, form: 'rear', n: 4, y: 0.5 },
+      { t: 74, form: 'gunship', y: 0.5 },
+      { t: 78, form: 'snake', n: 8, y: 0.4 },
+      { t: 81, form: 'carrier', y: 0.5, drop: 'bit' },
+      { t: 83, form: 'v', n: 5, y: 0.6 },
+      { t: 87, form: 'snake', n: 8, y: 0.55 },
+      { t: 90, form: 'gunship', y: 0.4 },
+      { t: 93, form: 'snake', n: 8, y: 0.3 },
+      { t: 95, form: 'snake', n: 8, y: 0.7 },
+      { t: 97, form: 'v', n: 5, y: 0.3 },
+      { t: 98, form: 'v', n: 5, y: 0.7 },
+      { t: 100, form: 'carrier', y: 0.5, drop: 'repair' },
+      { t: 101, form: 'wall', n: 7 },
+      { t: 105, form: 'boss' },
     ],
   },
   {
@@ -287,6 +302,10 @@ export const STAGES: StageDef[] = [
     ],
   },
 ];
+
+// The sim reads a script in order, so each runs sorted by time: the turret
+// runs are written as a block, and unsorted they arrived in bunches.
+for (const st of STAGES) st.script.sort((a, b) => a.t - b.t);
 
 /** Height of a floor or ceiling at a stage distance, linear between points. */
 export function heightAt(pts: [number, number][], d: number): number {

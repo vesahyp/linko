@@ -272,6 +272,8 @@ export interface SimState {
   /** a white flash over the screen, 0..1 */
   flash: number;
   banner: { text: string; sub: string; life: number } | null;
+  /** a teaching line under the play, from the opening of stage 1 */
+  hint: { text: string; life: number } | null;
   tally: Tally;
   stageTallies: Tally[];
   /** seconds in the clear and dead phases */
@@ -338,6 +340,7 @@ export function createState(seed: number): SimState {
     shake: 0,
     flash: 0,
     banner: null,
+    hint: null,
     tally: newTally(),
     stageTallies: [],
     phaseTime: 0,

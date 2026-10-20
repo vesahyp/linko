@@ -153,14 +153,21 @@ function runLine(s: SimState, ln: Line): void {
   const y = (ln.y ?? 0.5) * H;
   const n = ln.n ?? 1;
   switch (ln.form) {
-    case 'snake': {
+    case 'snake':
+    case 'row': {
+      // a snake weaves along one curve; a row flies straight, nose to tail, for one beam to take
       const f = newFormation(s, n);
       for (let i = 0; i < n; i++) {
-        const e = addEnemy(s, 'popcorn', W + 20 + i * 30, y, -150, 0);
+        const e = addEnemy(s, 'popcorn', W + 20 + i * (ln.form === 'row' ? 34 : 30), y, -(ln.speed ?? 150), 0);
         e.formation = f;
         e.index = i;
-        e.gunCd = 1.2 + s.rng.range(0, 3);
+        e.phase = ln.form === 'row' ? 1 : 0;
+        e.gunCd = ln.quiet ? 1e9 : 1.2 + s.rng.range(0, 3);
       }
+      break;
+    }
+    case 'hint': {
+      if (s.loop === 0 && ln.text) s.hint = { text: ln.text, life: 5 };
       break;
     }
     case 'wall': {
@@ -376,6 +383,7 @@ export function hurtShip(s: SimState, dmg: number, src: HurtSource): void {
 export function step(s: SimState, inp: SimInput): void {
   s.time += DT;
   if (s.banner && (s.banner.life -= DT) <= 0) s.banner = null;
+  if (s.hint && (s.hint.life -= DT) <= 0) s.hint = null;
   s.shake = Math.max(0, s.shake - DT * 30);
   s.flash = Math.max(0, s.flash - DT * 2.5);
   s.scroll += SCROLL_SPEED * DT;

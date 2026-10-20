@@ -6,6 +6,7 @@ import { Renderer } from '../render/renderer';
 import { InputController } from '../input/input';
 import { audio } from '../audio';
 import { UpdateBanner } from './Update';
+import { readInsets } from './safe';
 
 export interface RunSummary {
   stage: number;
@@ -29,6 +30,7 @@ interface Hud {
   pod: SimState['pod']['mode'];
   boss: { name: string; frac: number; phase: number } | null;
   banner: SimState['banner'];
+  hint: string | null;
   phase: SimState['phase'];
   offers: CardId[];
 }
@@ -42,16 +44,6 @@ export function sumTallies(ts: Tally[]): Tally {
     for (const [src, n] of Object.entries(t.hurtBy)) o.hurtBy[src] = (o.hurtBy[src] ?? 0) + n;
     o.peakShots = Math.max(o.peakShots, t.peakShots);
   }
-  return o;
-}
-
-function readInsets(): { l: number; r: number; t: number; b: number } {
-  const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);visibility:hidden';
-  document.body.appendChild(probe);
-  const cs = getComputedStyle(probe);
-  const o = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
-  probe.remove();
   return o;
 }
 
@@ -114,9 +106,9 @@ export function Game({ seed, from, onEnd, onQuit }: { seed: number; from: SimSta
       const w = root.clientWidth;
       const h = root.clientHeight;
       const ins = readInsets();
-      renderer.resize(w, h, { l: ins.l, r: ins.r, t: Math.max(ins.t, 2), b: Math.max(ins.b, 2) });
+      renderer.resize(w, h, ins);
       const pr = Math.max(24, Math.min(32, h * 0.075));
-      input.podBtn = { x: w - ins.r - pr - 14, y: h - ins.b - pr - 14, r: pr };
+      input.podBtn = { x: w - ins.r - pr - 14, y: h - Math.max(ins.b, 4) - pr - 12, r: pr };
       input.scale = renderer.scale;
       const pb = podRef.current;
       if (pb) {
@@ -193,6 +185,7 @@ export function Game({ seed, from, onEnd, onQuit }: { seed: number; from: SimSta
           pod: s.pod.mode,
           boss: b && b.t > 1 ? { name: ENEMIES[b.kind].name, frac: Math.max(0, b.hp / b.maxHp), phase: b.phase } : null,
           banner: s.banner ? { ...s.banner } : null,
+          hint: s.hint && s.phase === 'play' ? s.hint.text : null,
           phase: s.phase,
           offers: [...s.offers],
         });
@@ -284,6 +277,7 @@ export function Game({ seed, from, onEnd, onQuit }: { seed: number; from: SimSta
           <span>{hud.banner.sub}</span>
         </div>
       )}
+      {hud?.hint && <div className="hint">{hud.hint}</div>}
       {hud?.phase === 'pick' && (
         <div className="overlay pick" data-ui>
           <h2>Stage {hud.stage} clear</h2>

@@ -33,7 +33,7 @@ for (let n = 1; n <= STAGES.length; n++) {
   let most = 0;
   let mostShots = 0;
   let boss = false;
-  for (let i = 0; i < 60 * 100 && !boss; i++) {
+  for (let i = 0; i < 60 * 130 && !boss; i++) {
     step(s, NO_INPUT);
     s.sounds.length = 0;
     most = Math.max(most, s.enemies.length);
@@ -47,6 +47,34 @@ for (let n = 1; n <= STAGES.length; n++) {
   const def = STAGES[n - 1];
   const bad = def.script.filter((l) => l.form === 'turret').filter((l) => heightAt(l.at === 'ceil' ? def.ceil : def.floor, l.t * 45 + 800) <= 0);
   check(bad.length === 0, `stage ${n}: every turret line stands on terrain${bad.length ? ` (not at ${bad.map((l) => l.t).join(', ')} s)` : ''}`);
+}
+
+// the opening of stage 1 is calm: it teaches before it fights
+{
+  const s = ghost(newRun(5, 1));
+  let shots20 = 0;
+  let most30 = 0;
+  let enemies15 = 0;
+  let crystalBy = Infinity;
+  const hints: string[] = [];
+  for (let i = 0; i < 60 * 30; i++) {
+    const before = s.bullets.filter((b) => b.team === 'enemy').length;
+    step(s, NO_INPUT);
+    s.sounds.length = 0;
+    const now = s.bullets.filter((b) => b.team === 'enemy').length;
+    if (s.stageTime < 20 && now > before) shots20 += now - before;
+    most30 = Math.max(most30, now);
+    if (s.stageTime < 15) enemies15 = Math.max(enemies15, s.enemies.length);
+    if (s.enemies.some((e) => e.kind === 'carrier') && crystalBy === Infinity) crystalBy = s.stageTime;
+    if (s.hint && !hints.includes(s.hint.text)) hints.push(s.hint.text);
+  }
+  void enemies15;
+  const early = STAGES[0].script.filter((l) => l.t < 13 && l.form !== 'hint');
+  check(early.every((l) => (l.n ?? 1) <= 3 && l.quiet && (l.speed ?? 150) <= 90), `stage 1's first 13 s send ${early.length} groups of at most three slow ships that never fire`);
+  check(shots20 === 0, `no enemy fires in stage 1's first 20 s (${shots20} shots)`);
+  check(most30 <= 6, `at most ${most30} enemy shots in the air in stage 1's first 30 s`);
+  check(crystalBy < 21, `the first crystal's carrier comes at ${crystalBy.toFixed(1)} s`);
+  check(hints.length === 4, `the opening shows four hints: ${hints.join(' / ')}`);
 }
 
 // a boss's parts

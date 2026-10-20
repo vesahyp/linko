@@ -97,8 +97,9 @@ scripts/
   is proved with the hand: `make balance` for the numbers over many seeds
   (where runs end, boss fight times, what took the hull), then `make
   playthrough` and `make sheets`, and look at the frames before reporting.
-  As of 2026-10-14, over 24 seeds the hand loses 4 runs in stage 1, 6 to
-  the Serpent and 5 in the Dock, and clears all three stages in 9.
+  As of 2026-10-20 (the calm opening), over 24 seeds the hand loses 1 run
+  in stage 1, 9 in stage 2 (8 to the Serpent) and 2 in the Dock, and
+  clears all three stages in 12.
 - **The screen:** `make screen-check` proves the play screen fills an
   iPhone 15 in landscape two ways: the whole 852x393 screen as from the
   home screen, with the notch and home-bar insets stood in by
